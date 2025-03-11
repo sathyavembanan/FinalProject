@@ -30,8 +30,8 @@ nest_asyncio.apply()
 nlp = spacy.load("en_core_web_md")
 
 # Amadeus API credentials
-AMADEUS_API_KEY = os.environ.get("AMADEUS_API_KEY")
-AMADEUS_API_SECRET = os.environ.get("AMADEUS_API_SECRET")
+AMADEUS_API_KEY = "6J4YZ0p04PGGLfgVlSG12tbUoACJRmhx"
+AMADEUS_API_SECRET ="TpQ3l1yZRgGGLcwz"
 
 # Initialize Amadeus Client
 amadeus = Client(client_id="6J4YZ0p04PGGLfgVlSG12tbUoACJRmhx", client_secret="TpQ3l1yZRgGGLcwz")
