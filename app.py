@@ -1174,8 +1174,9 @@ def main():
         total_cost = 0
 
         # Add buttons for Car Details and Feasibility Check
-        car_details_button = st.button("Display Car Details")
+        
         feasibility_button = st.button("Check Feasibility of Car Travel")
+        car_details_button = st.button("Display Car Details")
 
          # Check Feasibility of Car Travel
         if feasibility_button:
