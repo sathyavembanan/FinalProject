@@ -27,7 +27,7 @@ from pydantic.networks import HttpUrl
 nest_asyncio.apply()
 
 # Load spaCy model
-nlp = spacy.load("en_core_web_sm")
+nlp = spacy.load("en_core_web_md")
 
 # Amadeus API credentials
 AMADEUS_API_KEY = "6J4YZ0p04PGGLfgVlSG12tbUoACJRmhx"
