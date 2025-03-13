@@ -30,11 +30,11 @@ nest_asyncio.apply()
 nlp = spacy.load("en_core_web_md")
 
 # Amadeus API credentials
-AMADEUS_API_KEY = "6J4YZ0p04PGGLfgVlSG12tbUoACJRmhx"
-AMADEUS_API_SECRET = "TpQ3l1yZRgGGLcwz"
+AMADEUS_API_KEY = "QKiI817G8Qi4CFePo84CLdarax0LOSE5"
+AMADEUS_API_SECRET = "0YW9DM1TyNpZYGCi"
 
 # Initialize Amadeus Client
-amadeus = Client(client_id="6J4YZ0p04PGGLfgVlSG12tbUoACJRmhx", client_secret="TpQ3l1yZRgGGLcwz")
+amadeus = Client(client_id="QKiI817G8Qi4CFePo84CLdarax0LOSE5", client_secret="0YW9DM1TyNpZYGCi")
 
 
 class FlightData(BaseModel):
@@ -253,15 +253,15 @@ def calculate_travel_price(car_type, price_per_km, distance, traveler_count):
 
 # Initialize Amadeus API client
 amadeus = Client(
-    client_id="6J4YZ0p04PGGLfgVlSG12tbUoACJRmhx",  # Replace with your Amadeus API Key
-    client_secret="TpQ3l1yZRgGGLcwz"  # Replace with your Amadeus API Secret
+    client_id="QKiI817G8Qi4CFePo84CLdarax0LOSE5",  # Replace with your Amadeus API Key
+    client_secret="0YW9DM1TyNpZYGCi"  # Replace with your Amadeus API Secret
 )
 def get_access_token() -> str:
     url = "https://test.api.amadeus.com/v1/security/oauth2/token"
     payload = {
         "grant_type": "client_credentials",
-        "client_id": "vmXAJ683T1OOwYBXDIsRyRAjUMSjc0AF",  # Replace with your Amadeus API Key
-        "client_secret": "c8Cyr3Eu5vX9Hmbf"  # Replace with your Amadeus API Secret
+        "client_id": "QKiI817G8Qi4CFePo84CLdarax0LOSE5",  # Replace with your Amadeus API Key
+        "client_secret": "0YW9DM1TyNpZYGCi"  # Replace with your Amadeus API Secret
     }
     headers = {"Content-Type": "application/x-www-form-urlencoded"}
 
