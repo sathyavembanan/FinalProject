@@ -1522,7 +1522,7 @@ def send_email_with_flight_details(flight_data):
     cheapest_flight = flight_data.get('cheap_flight') or flight_data.get('lowest_price_flight')
     
     if not cheapest_flight:
-        body = f"Sorry, no flights were found for your search from {flight_data['origin']} to {flight_data['destination']} on {flight_data['date']}. For more options visit http://localhost:8501/"
+        body = f"Sorry, no flights were found for your search from {flight_data['origin']} to {flight_data['destination']} on {flight_data['date']}. For more options visit https://travelassistant4.streamlit.app/"
     else:
         # Format departure and arrival times
         departure_time = datetime.strptime(cheapest_flight['departure_time'], "%Y-%m-%dT%H:%M:%S").strftime("%B %d, %Y at %I:%M %p")
