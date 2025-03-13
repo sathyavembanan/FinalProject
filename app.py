@@ -27,11 +27,11 @@ from pydantic.networks import HttpUrl
 nest_asyncio.apply()
 
 # Load spaCy model
-nlp = spacy.load("en_core_web_md")
+nlp = spacy.load("en_core_web_sm")
 
 # Amadeus API credentials
 AMADEUS_API_KEY = "6J4YZ0p04PGGLfgVlSG12tbUoACJRmhx"
-AMADEUS_API_SECRET ="TpQ3l1yZRgGGLcwz"
+AMADEUS_API_SECRET = "TpQ3l1yZRgGGLcwz"
 
 # Initialize Amadeus Client
 amadeus = Client(client_id="6J4YZ0p04PGGLfgVlSG12tbUoACJRmhx", client_secret="TpQ3l1yZRgGGLcwz")
@@ -54,7 +54,7 @@ class FlightSearchResult(BaseModel):
     message: str
     cheap_flight: FlightData | None = None
     lowest_price_flight: FlightData | None = None
-    flight_type : FlightData | None = None
+    Direct_Indirect : FlightData | None = None
 
 # Define a Pydantic model
 class EmailContent(BaseModel):
@@ -74,13 +74,10 @@ class HotelSearchResult(BaseModel):
     price : float
     message: str
 
-class Carsearchresult(BaseModel):
-    destination: str
-    start_date: str
-    end_date: str
-    people_count: int
-    car_type: str
-    daily_rate: float  # Price per da
+# Define the Pydantic model for the result (CarSearchResult)
+class CarSearchResult(BaseModel):
+    can_travel_by_car: str
+    reason: str
 
 # Pydantic model for experience validation
 class Experience(BaseModel):
@@ -231,7 +228,29 @@ if __name__ == "__main__":
 
     # Logout
     mail.logout()
-  
+
+
+car_data = {
+    ('New York', 'Los Angeles'): {'car_type': 'SUV', 'price_per_km': 0.25, 'distance': 4000},
+    ('London', 'Paris'): {'car_type': 'Sedan', 'price_per_km': 0.20, 'distance': 450},
+    ('Amsterdam', 'Berlin'): {'car_type': 'Compact', 'price_per_km': 0.15, 'distance': 600},
+    ('Tokyo', 'Osaka'): {'car_type': 'Luxury', 'price_per_km': 0.30, 'distance': 500},
+    ('Dallas', "New York"): {'car_type': 'SUV', 'price_per_km': 0.25, 'distance': 2500},
+    ('Dallas', 'Seattle'): {'car_type': 'Sedan', 'price_per_km': 0.22, 'distance': 3500},
+    ('Dallas', 'Paris'): {'car_type': 'Compact', 'price_per_km': 0.18, 'distance': 8000},
+    ('Dallas', 'Dubai'): {'car_type': 'Luxury', 'price_per_km': 0.30, 'distance': 13000},
+    ('Paris', 'London'): {'car_type': 'Sedan', 'price_per_km': 0.20, 'distance': 450},
+    ('Bangalore', 'Chennai'): {'car_type': 'SUV', 'price_per_km': 0.25, 'distance': 350},
+    ('Bangalore', 'Delhi'): {'car_type': 'Luxury', 'price_per_km': 0.30, 'distance': 2000},
+    ('Bangalore', 'Mumbai'): {'car_type': 'Compact', 'price_per_km': 0.18, 'distance': 1000},
+    ('New York', 'Tokyo'): {'car_type': 'SUV', 'price_per_km': 0.25, 'distance': 40000}
+}
+
+# Function to calculate total cost of travel
+def calculate_travel_price(car_type, price_per_km, distance, traveler_count):
+    return price_per_km * distance * traveler_count
+
+
 # Initialize Amadeus API client
 amadeus = Client(
     client_id="6J4YZ0p04PGGLfgVlSG12tbUoACJRmhx",  # Replace with your Amadeus API Key
@@ -410,7 +429,7 @@ def get_hotels(city_code: str, min_price: int, max_price: int) -> list:
             {
                 "hotel_id": hotel.get("hotelId", "Unknown"),
                 "name": hotel.get("name", "Unknown"),
-                "address": hotel.get("address", {}).get("lines", ["N/A"])[0],
+                # "address": hotel.get("address", {}).get("lines", ["N/A"])[0],
                 "rating": random.randint(1, 5),  # Random rating between 1 and 5
                 "price": random.randint(min_price, max_price)  # Random price between min_price and max_price
             }
@@ -527,137 +546,47 @@ def calculate_total_time_in_hours(departure: str, arrival: str)->float:
 #     end_day = start_day + 6
 
 #     return start_day <= date_obj.day <= end_day
-    
-
-def filter_and_sort_flights_by_price_and_duration(flights: list[dict]) -> list[dict]:
-    # Filter flights for direct ones
-    cheap_flight = [flight for flight in flights if flight["num_stops"] == 0]
-
-     # If no direct flights, consider flights with at least one stop
-    if not cheap_flight:
-        cheap_flight = flights  # Include all flights instead of only direct ones
-    
-  # Sort first by price, then by total flight time
-    return sorted(cheap_flight, key=lambda x: (x["price"], x["total_time_hours"]))
-
-def direct_indirect_flight(num_stops: int) -> str:
-
-    flight_type= lambda num_stops: "Direct" if num_stops == 0 else "Indirect"
-    
-    return flight_type(num_stops)
-
-car_data = {
-    ('JFK', 'LAX'): {'car_type': 'SUV', 'price_per_km': 0.25, 'distance': 4000},
-    ('LHR', 'CDG'): {'car_type': 'Sedan', 'price_per_km': 0.20, 'distance': 450},
-    ('AMS', 'BER'): {'car_type': 'Compact', 'price_per_km': 0.15, 'distance': 600},
-    ('NRT', 'KIX'): {'car_type': 'Luxury', 'price_per_km': 0.30, 'distance': 500},
-    ('DAL', 'JFK'): {'car_type': 'SUV', 'price_per_km': 0.25, 'distance': 2500},
-    ('DAL', 'SEA'): {'car_type': 'Sedan', 'price_per_km': 0.22, 'distance': 3500},
-    ('DAL', 'CDG'): {'car_type': 'Compact', 'price_per_km': 0.18, 'distance': 8000},
-    ('DAL', 'DXB'): {'car_type': 'Luxury', 'price_per_km': 0.30, 'distance': 13000},
-    ('CDG', 'LHR'): {'car_type': 'Sedan', 'price_per_km': 0.20, 'distance': 450},  # Paris to London
-    ('BLR', 'MAA'): {'car_type': 'SUV', 'price_per_km': 0.25, 'distance': 350},  # Bangalore to Chennai
-    ('BLR', 'DEL'): {'car_type': 'Luxury', 'price_per_km': 0.30, 'distance': 2000},  # Bangalore to New Delhi
-    ('BLR', 'BOM'): {'car_type': 'Compact', 'price_per_km': 0.18, 'distance': 1000},
-    ('JFK', 'NRT'): {'car_type': 'SUV', 'price_per_km': 0.25, 'distance': 40000}
-    # Bangalore to Mumbai
-
 
 
 
 
     
-}
-
-def is_accessible_by_car(self):
-    """
-    Check if either origin or destination is a coastal city with an ocean.
-    If either city is coastal, return False (not accessible by car).
-    """
-    if self.origin in self.ocean_cities or self.destination in self.ocean_cities:
-        return False
-    return True
-
-def calculate_distance(self):
-    """
-    Return the travel distance based on predefined city distances.
-    You can replace this with a more sophisticated distance calculation method.
-    """
-    city_distances = {
-        ('New York', 'Los Angeles'): 4500,  # in kilometers
-        ('London', 'Paris'): 340,  # in kilometers
-        ('Berlin', 'Amsterdam'): 650,  # in kilometers
-        ('Tokyo', 'Osaka'): 500,  # in kilometers
-        # Add more city pairs as needed
-    }
-    return city_distances.get((self.origin, self.destination), 0)
 
 
-def calculate_fuel_cost(self):
-    """
-    Calculate the fuel cost for the journey based on the distance and fuel price.
-    """
-    if not self.is_accessible_by_car():
-        return "This route cannot be traveled by car due to ocean cities."
+# def is_accessible_by_car(self):
+#     """
+#     Check if either origin or destination is a coastal city with an ocean.
+#     If either city is coastal, return False (not accessible by car).
+#     """
+#     if self.origin in self.ocean_cities or self.destination in self.ocean_cities:
+#         return False
+#     return True
 
-    distance = self.calculate_distance()
-    if distance == 0:
-        return "Distance data unavailable for this route."
-
-    fuel_required = distance / self.fuel_efficiency  # Fuel required in liters
-    total_cost = fuel_required * self.fuel_price  # Total cost of fuel
-    return f"The estimated fuel cost for your trip is ${total_cost:.2f}"
-
+# def car_travel_prompt():
+#     """
+#     A function to prompt the user for travel details and calculate the car travel cost.
+#     This includes inputs for origin, destination, fuel price, and fuel efficiency.
+#     """
+#     # Example manual data for cities with oceans
+#     ocean_cities = ["Miami", "Los Angeles", "New York", "Tokyo", "San Francisco"]  # Predefined coastal cities
     
-# Function to calculate the total travel price
-def calculate_travel_price(car_type, price_per_km, distance, traveler_count):
-    # Calculate the total cost for the travel
-    return price_per_km * distance * traveler_count
+#     # Example user input (can be dynamic based on your actual input interface)
+#     origin = input("Enter your origin city: ")  # e.g., "London"
+#     destination = input("Enter your destination city: ")  # e.g., "Paris"
+#     fuel_price = float(input("Enter the current fuel price per liter (in USD): "))  # e.g., 1.5
+#     fuel_efficiency = float(input("Enter your car's fuel efficiency (in km per liter): "))  # e.g., 15
+    
+#     # Create the car travel agent
+#     agent = CarTravelAgent(origin, destination, fuel_price, fuel_efficiency, ocean_cities)
+    
+#     # Get and display the fuel cost result
+#     result = agent.calculate_fuel_cost()
+#     print(result)
 
 
-
-
-def car_travel_prompt():
-    """
-    A function to prompt the user for travel details and calculate the car travel cost.
-    This includes inputs for origin, destination, fuel price, and fuel efficiency.
-    """
-    # Example manual data for cities with oceans
-    ocean_cities = ["Miami", "Los Angeles", "New York", "Tokyo", "San Francisco"]  # Predefined coastal cities
-    
-    # Example user input (can be dynamic based on your actual input interface)
-    origin = input("Enter your origin city: ")  # e.g., "London"
-    destination = input("Enter your destination city: ")  # e.g., "Paris"
-    fuel_price = float(input("Enter the current fuel price per liter (in USD): "))  # e.g., 1.5
-    fuel_efficiency = float(input("Enter your car's fuel efficiency (in km per liter): "))  # e.g., 15
-    
-    # Create the car travel agent
-    agent = CarTravelAgent(origin, destination, fuel_price, fuel_efficiency, ocean_cities)
-    
-    # Get and display the fuel cost result
-    result = agent.calculate_fuel_cost()
-    print(result)
-
-def __init__(self, origin, destination, fuel_price, fuel_efficiency, ocean_cities):
-    """
-    Initialize the car travel agent with the given parameters.
-    
-    Parameters:
-    - origin: Starting city for the trip.
-    - destination: Destination city for the trip.
-    - fuel_price: Price of fuel per liter (in USD).
-    - fuel_efficiency: Fuel efficiency of the car (in km per liter).
-    - ocean_cities: List of cities with oceans that cannot be traveled by car.
-    """
-    self.origin = origin
-    self.destination = destination
-    self.fuel_price = fuel_price
-    self.fuel_efficiency = fuel_efficiency
-    self.ocean_cities = ocean_cities
-    
         
 def fetch_flight_data(origin: str, destination: str, date: str,sender_email:str, travel_class: str = None,flight_data_limit=10)-> dict:
-    flight_type = "Unknown"  # Initialize flight_type with a default value
+    Direct_Indirect = "Unknown"  # Initialize 'Direct_Indirect' with a default value
     lowest_price_flight = None  # Initialize lowest_price_flight to avoid reference errors
     
     try:
@@ -702,7 +631,7 @@ def fetch_flight_data(origin: str, destination: str, date: str,sender_email:str,
             stopover_airports = [segment["departure"]["iataCode"] for segment in itinerary[1:-1]]
 
              # flight type
-            flight_type = direct_indirect_flight(num_stops)
+            Direct_Indirect = direct_indirect_flight(num_stops)
 
             
             # Append flight details
@@ -715,8 +644,9 @@ def fetch_flight_data(origin: str, destination: str, date: str,sender_email:str,
                 "travel_class": travel_class,
                 "total_time_hours": total_time_hours,
                 "num_stops": num_stops,
-                "flight_type":flight_type,
+                "Direct_Indirect":Direct_Indirect,
                 "stopover_airports": stopover_airports
+    
                 
                 
             })
@@ -747,7 +677,7 @@ def fetch_flight_data(origin: str, destination: str, date: str,sender_email:str,
             "flights": flights,
             "message": f"Found {len(flights)} flights from {origin} to {destination} on {date}.",
             "cheap_flight": cheapest_flight,
-            "flight_type":flight_type,
+            "Direct_Indirect":Direct_Indirect,
             "lowest_price_flight": lowest_price_flight
         }
 
@@ -760,7 +690,7 @@ def fetch_flight_data(origin: str, destination: str, date: str,sender_email:str,
             "flights": [],
             "message": f"An error occurred: {error}",
             "cheap_flight": None,
-            "flight_type":flight_type,
+            "Direct_Indirect":Direct_Indirect,
             "lowest_price_flight": lowest_price_flight
         }
 
@@ -775,7 +705,22 @@ def find_lowest_price_flight(flights):
     return None
 
 
+def filter_and_sort_flights_by_price_and_duration(flights: list[dict]) -> list[dict]:
+    # Filter flights for direct ones
+    cheap_flight = [flight for flight in flights if flight["num_stops"] == 0]
 
+     # If no direct flights, consider flights with at least one stop
+    if not cheap_flight:
+        cheap_flight = flights  # Include all flights instead of only direct ones
+    
+  # Sort first by price, then by total flight time
+    return sorted(cheap_flight, key=lambda x: (x["price"], x["total_time_hours"]))
+
+def direct_indirect_flight(num_stops: int) -> str:
+
+    Direct_Indirect= lambda num_stops: "Direct" if num_stops == 0 else "Indirect"
+    
+    return Direct_Indirect(num_stops)
 
 
 
@@ -835,7 +780,7 @@ flight_agent = Agent(
         "- **Flexible Dates:** Search for flights ±1 or ±2 days from the given date. \n"
         "- **Week Preference:** Ensure flights fall within the 2nd or 3rd week of the month if specified. \n"
         "- **Max Price & Duration:** Filter flights that exceed the max price or max duration constraints. \n"
-        "airlineprice currency	departure_time	arrival_time	travel_class	total_time_hours	num_stops	flight_type	stopover_airports",
+        "airlineprice currency	departure_time	arrival_time	travel_class	total_time_hours	num_stops	flight_type  stopover_airports",
         f"""The above are the column headers kindly filter out with the limitations given below
         Actualdata:{filtered_flights}
         /nMax Price ($):{max_price} Max Duration (hrs):{max_duration} Origin Airport Code:{origin} Destination Airport Code:{destination} Departure Date:{date}"""
@@ -870,40 +815,6 @@ hotel_agent = Agent(
     ),
 )
 
-car_agent = Agent(
-    GroqModel(
-        model_name="llama-3.3-70b-versatile",
-        api_key="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"
-    ),
-    result_type=Carsearchresult,
-    system_prompt=("""You are a virtual car rental assistant. You can calculate car travel costs based on distance, fuel price, and fuel efficiency. 
-    Here’s how you should handle the calculations:
-    
-    1. **Check for Oceans:**
-        - If either the origin or destination is a city with an ocean, ignore the route for car travel.
-        - Use the following predefined list of coastal cities that have an ocean: ["Miami", "Los Angeles", "New York", "Tokyo", "San Francisco"].
-    
-    2. **Calculate Distance:**
-        - Use predefined distances between city pairs. Example: 'New York' to 'Los Angeles' is 4500 km.
-        - If the distance between the cities is not available, return a message: "Distance data unavailable for this route."
-    
-    3. **Calculate Fuel Requirements and Cost:**
-        - The fuel required for the trip is calculated as: 
-          `Fuel Required = Distance / Fuel Efficiency (in km per liter)`
-        - The cost of the fuel is: 
-          `Fuel Cost = Fuel Required * Fuel Price (per liter)`
-        
-    4. **Return Results:**
-        - If the route cannot be traveled by car (due to ocean cities), return: "This route cannot be traveled by car due to ocean cities."
-        - Otherwise, return the calculated fuel cost in the format: "The estimated fuel cost for your trip is $X.XX."
-    
-    Example Interaction:
-    User: "Calculate the cost of traveling from London to Paris, fuel price is 1.5 USD per liter, and fuel efficiency is 15 km per liter."
-    Response: "The estimated fuel cost for your trip is $34.00."
-    
-    Your task is to handle these kinds of user interactions with correct calculations and return the results.
-    """
-))
 
 
 flight_passengers = 1
@@ -1026,12 +937,25 @@ def main():
                             default_date = datetime.now().date()
                 if email_data.sender:
                     default_email = email_data.sender
+
+            
+          
+                
             
             max_price = st.slider("Max Price ($)", 50, 5000, 1000, 100)
             max_duration = st.slider("Max Duration (hrs)", 1, 20, 10, 1)
             origin = st.text_input("Origin Airport Code", default_origin)
             destination = st.text_input("Destination Airport Code", default_destination)
-            date = st.date_input("Departure Date", default_date or datetime.now())
+            # Ensure departure_date is defined, fallback to today's date if None
+            travel_date = st.date_input("Departure Date", default_date or datetime.now().date())
+
+    # Check if departure_date is valid (not None) before adding 7 days
+            if travel_date:
+                return_date = travel_date + timedelta(days=7)
+            else:
+        # Fallback to 7 days from today's date if departure_date is None
+                return_date = datetime.now().date() + timedelta(days=7)
+            return_date_input= st.date_input("Return Date", return_date)
           #  sender_email = st.text_input("Email", default_email)
 
             st.subheader("Flexible Filter")
@@ -1087,6 +1011,13 @@ def main():
             if "flights" in flight_details and flight_details["flights"]:
             # Convert data to DataFrame
                 flights_df = pd.DataFrame(flight_details["flights"])
+
+                columns_to_remove = ["num_stops", "stopover_airports"]  # Replace with actual column names
+
+            
+
+            # Drop these columns from the DataFrame
+                flights_df = flights_df.drop(columns=columns_to_remove, axis=1, errors="ignore") 
 
             # Ensure correct data types
                 flights_df["price"] = pd.to_numeric(flights_df["price"], errors="coerce")
@@ -1172,17 +1103,26 @@ def main():
     
     with tab4:
         st.header("Car Travel")
-        tab4_default_origin_code = ""
-        tab4_default_destination_code = ""
-        tab4_default_start_date = datetime.now()
-        # Use the origin from email data if available (assuming it's stored in origin field)
-        if st.session_state.email_data and hasattr(st.session_state.email_data, 'origin'):
-            tab4_default_origin_code = st.session_state.email_data.origin
+        if 'email_data' not in st.session_state:
+            st.session_state.email_data = {}
         
+        # Default values for origin, destination, and start date
+        tab4_default_origin_city = ""
+        tab4_default_destination_city = ""
+        tab4_default_start_date = datetime.now().date()
+
+        # Initialize origin and destination city names
+        origin_city = ""
+        destination_city = ""
+
+        if st.session_state.email_data and hasattr(st.session_state.email_data, 'origin'):
+            tab4_default_origin_city = st.session_state.email_data.origin
+
         # Use the destination from email data if available
         if st.session_state.email_data and hasattr(st.session_state.email_data, 'destination'):
-            tab4_default_destination_code = st.session_state.email_data.destination
+            tab4_default_destination_city = st.session_state.email_data.destination
         
+                 
         # Use the date from email data for start date if available
         if st.session_state.email_data and hasattr(st.session_state.email_data, 'date'):
             try:
@@ -1199,60 +1139,106 @@ def main():
                             continue
                 except:
                     # If all parsing attempts fail, use today's date
-                    tab4_default_start_date = datetime.now()
+                    tab4_default_start_date = datetime.now().date()
         
-        # Car rental filters inside tab4
-        origin_code = st.selectbox("Select the origin airport code:", 
-                                  ['JFK', 'LHR', 'AMS', 'NRT'], 
-                                  index=(['JFK', 'LHR', 'AMS', 'NRT'].index(tab4_default_origin_code) if tab4_default_origin_code in ['JFK', 'LHR', 'AMS', 'NRT'] else 0),
-                                  key="tab4_origin")
+        # Use the origin from email data if available
         
-        destination_code = st.selectbox("Select the destination airport code:", 
-                                       ['LAX', 'CDG', 'BER', 'KIX'],
-                                       index=(['LAX', 'CDG', 'BER', 'KIX'].index(tab4_default_destination_code) if tab4_default_destination_code in ['LAX', 'CDG', 'BER', 'KIX'] else 0),
-                                       key="tab4_destination")
+        origin_city = st.selectbox("Select the origin city:",  [tab4_default_origin_city], index=0)
         
-        traveler_count = st.number_input("Enter the number of travelers:", 
-                                        min_value=1, 
-                                        max_value=10, 
-                                        value=(st.session_state.email_data.passengers if hasattr(st.session_state.email_data, 'passengers') else 1),
-                                        key="tab4_travelers")
         
-        start_date = st.date_input("Select the start date:", 
-                                  tab4_default_start_date,
-                                  key="tab4_start_date")
+        # Get the origin city code from the selected city name
+        origin_code = get_city_code(origin_city)
         
-        end_date = st.date_input("Select the end date:", 
-                                tab4_default_start_date + pd.Timedelta(days=5),
-                                key="tab4_end_date")
         
-        # Define default values
+        destination_city = st.selectbox("Select the destination city:", [tab4_default_destination_city], index=0)
+        
+        
+        # Get the destination city code from the selected city name
+        destination_code = get_city_code(destination_city)
+        
+        # Traveler count and dates
+        traveler_count = st.number_input("Enter the number of travelers:", min_value=1, max_value=10, value=st.session_state.email_data.passengers if hasattr(st.session_state.email_data, 'passengers') else 1, key="tab4_travelers")
+        
+        # Start date input, using the value from email data if it exists
+        start_date = st.date_input("Select the start date:", tab4_default_start_date, key="tab4_start_date")
+        
+        # End date input, defaulting to 5 days after the start date
+        end_date = st.date_input("Select the end date:", tab4_default_start_date + pd.Timedelta(days=5), key="tab4_end_date")
+        
+        # Optionally, you can display selected values for debugging purposes
+        
+        # Define default values for the car rental
         car_type = "N/A"
         price_per_km = 0
         distance = 0
         total_cost = 0
+
+        # Add buttons for Car Details and Feasibility Check
+        car_details_button = st.button("Display Car Details")
+        feasibility_button = st.button("Check Feasibility of Car Travel")
+
+         # Check Feasibility of Car Travel
+        if feasibility_button:
+            origin_coordinates = get_coordinates_from_city_name(origin_city)
+            destination_coordinates = get_coordinates_from_city_name(destination_city)
+            
+            if origin_coordinates and destination_coordinates:
+                input_data = {
+                    "origin_coordinates": origin_coordinates,
+                    "destination_coordinates": destination_coordinates
+                }
+                
+                # Construct the string input for the agent
+                input_string = f"Can you tell whether car travel is possible from {origin_coordinates} to {destination_coordinates}?"
+                
+                car_agent = Agent(
+                    GroqModel(
+                        model_name="llama-3.3-70b-versatile",
+                        api_key="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"
+                    ),
+                    result_type=CarSearchResult,
+                    system_prompt=("""
+                        You are an agent that receives city coordinates as input. Your job is to assess whether car travel is feasible based on the coordinates and provide the reason. If the cities are on the same landmass and not separated by large obstacles (e.g., oceans), the answer should be 'Yes'. Otherwise, the answer should be 'No', with a clear explanation.""")
+                )
+
+                response = car_agent.run_sync(input_string)
+                result = response.data.model_dump()
+                
+                # Display the result
+                if result['can_travel_by_car'] == "Yes":
+                    st.success(f"Car travel is possible from {origin_city} to {destination_city}. Reason: {result['reason']}")
+                else:
+                    st.warning(f"Car travel is not possible from {origin_city} to {destination_city}. Reason: {result['reason']}")
+            else:
+                st.warning("Could not fetch coordinates for the origin or destination cities.")
+
+       
+
         
-        # Add a search button
-        if st.button("Search Car Rentals", key="tab4_car_search_button"):
-            # Look up car data based on the origin and destination airport codes
-            if (origin_code, destination_code) in car_data:
-                car_info = car_data[(origin_code, destination_code)]
+       # Display Car Details
+        if car_details_button:
+            if (origin_city, destination_city) in car_data:
+                car_info = car_data[(origin_city, destination_city)]
+                # origin_city=car_data[(origin_city)]
+                # destination_city=car_data[(destination_city)]
                 car_type = car_info['car_type']
                 price_per_km = car_info['price_per_km']
                 distance = car_info['distance']
                 
-                # Calculate travel price
+                # Calculate total cost
                 total_cost = calculate_travel_price(car_type, price_per_km, distance, traveler_count)
                 
                 # Display the results
-                st.success(f"Found car rental options for {origin_code} to {destination_code}")
+                st.success(f"Found car rental options for {origin_city} to {destination_city}")
                 st.write(f"**Car Type**: {car_type}")
                 st.write(f"**Distance**: {distance} km")
                 st.write(f"**Price per km**: ${price_per_km}")
                 st.write(f"**Total travel cost for {traveler_count} travelers**: ${total_cost:.2f}")
             else:
-                st.warning("No travel data available for the entered airport codes.")
-    
+                st.warning("No travel data available for the entered airport city.")
+
+        
+             
     
                 
     with tab5:
@@ -1454,7 +1440,7 @@ print(f"  Message: {flights['message']}")
 
 print("\nAvailable Flights:")
 for flight in flights["flights"]:
-    print(f"  - Airline: {flight['airline']}, Price: ${flight['price']} {flight['currency']},Origin:{flights['origin']},Destination:{flights['destination']}, TravelClass: {flight['travel_class']}, Flightype: {flight['flight_type']},Departure: {flight['departure_time']}, TotalHours: {flight['total_time_hours']} hours,Stops: {flight['num_stops']}")
+    print(f"  - Airline: {flight['airline']}, Price: ${flight['price']} {flight['currency']},Origin:{flights['origin']},Destination:{flights['destination']}, TravelClass: {flight['travel_class']}, Flightype: {flight['Direct_Indirect']},Departure: {flight['departure_time']}, TotalHours: {flight['total_time_hours']} hours,Stops: {flight['num_stops']}")
 
 # Print the cheapest flight if available
 if flights["cheap_flight"]:
@@ -1462,12 +1448,12 @@ if flights["cheap_flight"]:
     
     cheap = flights["cheap_flight"]
     print(f"  - Airline: {cheap['airline']}, Price: ${cheap['price']} {cheap['currency']}, "
-          f"Departure: {cheap['departure_time']},TravelClass:{cheap['travel_class']}, Stops: {cheap['num_stops']},Traveltype: {cheap['flight_type']}, TotalHours: {cheap['total_time_hours']} hours")
+          f"Departure: {cheap['departure_time']},TravelClass:{cheap['travel_class']}, Stops: {cheap['num_stops']},Traveltype: {cheap['Direct_Indirect']}, TotalHours: {cheap['total_time_hours']} hours")
 
 if flights["lowest_price_flight"]:
     lowest = flights["lowest_price_flight"]
     print("\nLowest Price Flight:")
-    print(f"  - Airline: {lowest['airline']}, Price: ${lowest['price']} {lowest['currency']}, Departure: {lowest['departure_time']},TravelClass:{lowest['travel_class']},flighttype: {lowest['flight_type']} , Stops: {lowest['num_stops']}, TotalHours: {lowest['total_time_hours']} hours")
+    print(f"  - Airline: {lowest['airline']}, Price: ${lowest['price']} {lowest['currency']}, Departure: {lowest['departure_time']},TravelClass:{lowest['travel_class']},flighttype: {lowest['Direct_Indirect']} , Stops: {lowest['num_stops']}, TotalHours: {lowest['total_time_hours']} hours")
 else:
     print("\nNo flights available.")
 
@@ -1475,7 +1461,7 @@ else:
 
 # result = flight_agent.run_sync(f"""
 # The following are the column headers in the filtered_flights DataFrame:
-# airline, price_currency, departure_time, arrival_time, travel_class, total_time_hours, num_stops, flight_type, and stopover_airports.
+# airline, price_currency, departure_time, arrival_time, travel_class, total_time_hours, num_stops, Direct_Indirect, and stopover_airports.
 
 # Please filter the data based on these conditions:
 # - Maximum Price: ${max_price}
@@ -1489,7 +1475,7 @@ else:
 
 nest_asyncio.apply()
 
-result=flight_agent.run_sync(f"""The following are the column headers in the filtered_flights DataFrame: airlineprice_currency, departure_time, arrival_time, travel_class, total_time_hours, num_stops, flight_type, and stopover_airports.
+result=flight_agent.run_sync(f"""The following are the column headers in the filtered_flights DataFrame: airlineprice_currency, departure_time, arrival_time, travel_class, total_time_hours, num_stops,Direct_Indirect
 
 Please filter the data based on the given conditions:
 
@@ -1549,7 +1535,7 @@ def send_email_with_flight_details(flight_data):
         Route: {flight_data['origin']} to {flight_data['destination']}
         Date: {flight_data['date']}
         Airline: {cheapest_flight['airline']}
-        Flight Type: {cheapest_flight['flight_type']}
+        Flight Type: {cheapest_flight['Direct_Indirect']}
         Price: ${cheapest_flight['price']} {cheapest_flight['currency']}
         Departure: {departure_time}
         Arrival: {arrival_time}
