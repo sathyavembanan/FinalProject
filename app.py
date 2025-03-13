@@ -793,7 +793,7 @@ flight_agent = Agent(
 destination_attraction_agent = Agent(
     GroqModel(
         model_name="llama-3.3-70b-versatile",  # Replace with the AI model you are using
-        api_key="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"  # Replace with your Groq API Key
+        api_key="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"  # Replace with your Groq API Key
     ),
     result_type=CategorizationResult,
     system_prompt=(
