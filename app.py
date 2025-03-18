@@ -28,7 +28,7 @@ from mistralai import Mistral
 nest_asyncio.apply()
 
 # Load spaCy model
-nlp = spacy.load("en_core_web_sm")
+nlp = spacy.load("en_core_web_md")
 
 # Amadeus API credentials
 AMADEUS_API_KEY = "QKiI817G8Qi4CFePo84CLdarax0LOSE5"
